@@ -5,6 +5,9 @@ import calendar
 from datetime import datetime
 import pyperclip
 import excel_ordering
+import pygetwindow as gw
+import win32gui
+import win32con
 
 # Obtener tamaño de la pantalla
 screen_width, screen_height = pyautogui.size()
@@ -33,14 +36,28 @@ def wait_for_color(x_ratio, y_ratio, target_color, timeout=30):
     print("Tiempo de espera agotado. No se detectó el color.")
     return False
 
-def main():
-    print("Abriendo Google Chrome...")
-    os.system("start chrome")
-    time.sleep(3)
+def focus_existing_window(title):
+    windows = gw.getWindowsWithTitle(title)
+    if windows:
+        win = windows[0]
+        win32gui.ShowWindow(win._hWnd, win32con.SW_RESTORE)  # Restaurar si está minimizada
+        win32gui.SetForegroundWindow(win._hWnd)  # Traer al frente
+        print(f"Ventana '{title}' enfocada.")
+        return True
+    return False
 
-    print("Escribiendo URL de ASB")
-    pyautogui.typewrite("https://zonasegura.asbnet.com/FOPM/servletcontroller?SUBSESSIONID=0")
-    pyautogui.press("enter")
+def main():
+    # Verificar si la ventana con la web ya está abierta
+    if focus_existing_window("Temenos WealthSuite"):
+        print("La ventana ya estaba abierta y fue enfocada.")
+    else:
+        print("Abriendo Google Chrome...")
+        os.system("start https://www.google.com")  # Windows
+        time.sleep(3)
+        print("Escribiendo URL de ASB")
+        pyautogui.click(int(screen_width * 0.20), int(screen_height * 0.08))  # Hacer focus en la barra de direcciones
+        pyautogui.typewrite("https://zonasegura.asbnet.com/FOPM/servletcontroller?SUBSESSIONID=0")
+        pyautogui.press("enter")
 
     # Esperar que la página cargue detectando un color en una posición relativa
     if wait_for_color(0.32, 0.20, (84, 86, 90), timeout=30):

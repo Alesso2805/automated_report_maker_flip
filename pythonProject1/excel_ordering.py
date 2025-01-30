@@ -2,8 +2,8 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment
 
-ruta_archivo = "C:/Users/USER/Downloads/Ejemplo ASB.csv"
-output_excel_path = "C:/Users/USER/Desktop/Ejemplo_ASB_ordenado.xlsx"
+ruta_archivo = "C:/Users/Alessandro/Desktop/Ejemplo ASB.csv"
+output_excel_path = "C:/Users/Alessandro/Desktop/Ejemplo_ASB_ordenado.xlsx"
 
 # Leer el archivo CSV y procesarlo como ya lo tienes
 csv_rows = []
@@ -28,19 +28,49 @@ for line in data_lines:
 # Crear un DataFrame
 df = pd.DataFrame(list_of_lists, columns=headers)
 
-# Verificar si las columnas a ordenar existe antes de continuar
-if "Trade date" in df.columns and "Nature" in df.columns and "Currency" in df.columns:
+# Verificar si las columnas a ordenar existen antes de continuar
+if {"Trade date", "Account Denom", "Net Amount", "Nature", "Currency", "Price", "Quantity", "Instr. Denom."}.issubset(df.columns):
     # Renombrar las columnas
-    df.rename(columns={"Trade date": "Fecha", "Nature": "Operación", "Currency":"Moneda"}, inplace=True)
+    df.rename(columns={
+        "Trade date": "Fecha",
+        "Nature": "Operación",
+        "Currency": "Moneda",
+        "Price": "Px de Compra",
+        "Quantity": "Cantidad",
+        "Account Denom": "Cuenta Asociada",
+        "Net Amount": "Importe Neto",
+        "Instr. Denom.": "Ticker"
+    }, inplace=True)
 
-    # Mover "Fecha" y "Operación" a las primeras posiciones
-    cols = ["Fecha", "Operación", "Moneda"] + [col for col in df.columns if col not in ["Fecha", "Operación", "Moneda"]]
+    cols = ["Fecha", "Operación", "Ticker", "Cantidad", "Cuenta Asociada", "Importe Neto", "Moneda", "Texto", "Px de Compra"]
+
+    # Ordenar las columnas de Fecha de forma ascendente sin la hora
+    df["Fecha"] = pd.to_datetime(df["Fecha"], format="%d/%m/%Y", errors="coerce").dt.date
+    df.sort_values("Fecha", ascending=True, inplace=True)
+
+    # Eliminar columnas duplicadas (si existieran)
+    df = df.loc[:, ~df.columns.duplicated()]
+
+    if {"Fecha", "Ticker", "Importe Neto", "Moneda"}.issubset(df.columns):
+        # Reemplazar NaN con cadenas vacías y convertir a string antes de concatenar
+        # Crear la columna "Texto" con el formato de fecha "DD/MM" sin el año
+        df["Texto"] = df.apply(
+            lambda row: f"El {row['Fecha'].strftime('%d/%m')} - {row['Ticker']} - {row['Importe Neto']} - {row['Moneda']}",
+            axis=1
+        )
+
+        # Insertar la columna "Texto" en la posición correcta
+        df.insert(df.columns.get_loc("Px de Compra"), "Texto", df.pop("Texto"))
 
     # Reordenar el DataFrame
-    df = df[cols]
+    df = df.loc[:, cols]
 
     # Reemplazar "Income" por "Ingresos" en la columna "Operación"
     df["Operación"] = df["Operación"].replace("Income", "Ingresos")
+
+# Borrar columna "Op. Ccy." si existe
+if "Op. Ccy." in df.columns:
+    df.drop(columns=["Op. Ccy."], inplace=True)
 
 # Guardar el DataFrame en un archivo Excel
 df.to_excel(output_excel_path, index=False)
