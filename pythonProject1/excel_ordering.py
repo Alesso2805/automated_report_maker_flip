@@ -55,7 +55,7 @@ if {"Trade date", "Account Denom", "Net Amount", "Nature", "Currency", "Price", 
         # Reemplazar NaN con cadenas vacías y convertir a string antes de concatenar
         # Crear la columna "Texto" con el formato de fecha "DD/MM" sin el año
         df["Texto"] = df.apply(
-            lambda row: f"El {row['Fecha'].strftime('%d/%m')} - {row['Ticker']} - {row['Importe Neto']} - {row['Moneda']}",
+            lambda row: f"El {row['Fecha'].strftime('%d/%m')} se recibio {row['Moneda']} {row['Importe Neto']} de {row['Ticker']} en la cuenta {row['Cuenta Asociada']}.",
             axis=1
         )
 
