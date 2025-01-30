@@ -66,7 +66,7 @@ if {"Trade date", "Account Denom", "Net Amount", "Nature", "Currency", "Price", 
     df = df.loc[:, cols]
 
     # Reemplazar "Income" por "Ingresos" en la columna "Operación"
-    df["Operación"] = df["Operación"].replace("Income", "Ingresos")
+    df["Operación"] = df["Operación"].replace("Income", "Dividendos")
 
 # Borrar columna "Op. Ccy." si existe
 if "Op. Ccy." in df.columns:
